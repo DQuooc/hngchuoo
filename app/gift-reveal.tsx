@@ -118,33 +118,93 @@ function ParticleHeartCanvas({ burst }: { burst: boolean }) {
     let height = 0;
     let seed = 220819;
     const burstStartedAt = performance.now();
+    const particleCount = 3200;
 
     const random = () => {
       seed = (seed * 1664525 + 1013904223) >>> 0;
       return seed / 4294967296;
     };
 
-    const particles = Array.from({ length: 1900 }, (_, index) => {
+    const particles = Array.from({ length: particleCount }, (_, index) => {
       const angle = random() * Math.PI * 2;
-      const onShell = random() < 0.64;
-      const radius = onShell ? 0.82 + random() * 0.2 : Math.sqrt(random()) * 0.88;
+      const layer = random();
+      const onShell = layer < 0.42;
+      const isAura = layer > 0.96;
+      const radius = isAura
+        ? 1.03 + random() * 0.13
+        : onShell
+          ? 0.9 + random() * 0.12
+          : Math.sqrt(random()) * 0.96;
       const sin = Math.sin(angle);
       const x = 16 * sin * sin * sin * radius;
       const y = -(13 * Math.cos(angle) - 5 * Math.cos(angle * 2) - 2 * Math.cos(angle * 3) - Math.cos(angle * 4)) * radius;
-      const z = (random() - 0.5) * (7.5 - radius * 2.8);
+      const z = (random() - 0.5) * (9.4 - Math.min(radius, 1) * 3.1);
 
       return {
         x,
         y,
         z,
-        size: 0.55 + random() * 1.75,
+        size: (isAura ? 0.42 : 0.58) + random() * (onShell ? 1.95 : 1.55),
         twinkle: random() * Math.PI * 2,
         drift: random() * Math.PI * 2,
-        hue: 329 + random() * 24,
+        hue: 326 + random() * 27,
         speed: 0.7 + random() * 1.4,
+        onShell,
+        isAura,
+        targetX: 0,
+        targetY: 0,
         index,
       };
     });
+
+    const buildTextTargets = () => {
+      const textCanvas = document.createElement('canvas');
+      textCanvas.width = Math.max(1, Math.round(width));
+      textCanvas.height = Math.max(1, Math.round(height));
+      const textContext = textCanvas.getContext('2d', { willReadFrequently: true });
+      if (!textContext) return;
+
+      const compact = width < 620;
+      const lines = compact ? ['Mãi thương em', 'Hồng Châu'] : ['Mãi thương em Hồng Châu'];
+      let fontSize = compact ? Math.min(58, width * 0.135) : Math.min(82, width * 0.082);
+      const setFont = () => {
+        textContext.font = `italic 700 ${fontSize}px Georgia, serif`;
+      };
+
+      setFont();
+      const widestLine = () => Math.max(...lines.map((line) => textContext.measureText(line).width));
+      while (widestLine() > width * 0.86 && fontSize > 22) {
+        fontSize -= 1;
+        setFont();
+      }
+
+      const lineHeight = fontSize * 1.08;
+      const firstBaseline = height / 2 - ((lines.length - 1) * lineHeight) / 2 + fontSize * 0.34;
+      textContext.clearRect(0, 0, width, height);
+      textContext.fillStyle = '#ffffff';
+      textContext.textAlign = 'center';
+      textContext.textBaseline = 'middle';
+      lines.forEach((line, lineIndex) => {
+        textContext.fillText(line, width / 2, firstBaseline + lineIndex * lineHeight);
+      });
+
+      const pixels = textContext.getImageData(0, 0, textCanvas.width, textCanvas.height).data;
+      const step = compact ? 2 : 3;
+      const targets: Array<{ x: number; y: number }> = [];
+      for (let y = 0; y < textCanvas.height; y += step) {
+        for (let x = 0; x < textCanvas.width; x += step) {
+          if (pixels[(y * textCanvas.width + x) * 4 + 3] > 80) targets.push({ x, y });
+        }
+      }
+
+      if (!targets.length) return;
+      particles.forEach((particle, index) => {
+        const target = targets[(index * 9973) % targets.length];
+        const duplicateJitter = index >= targets.length ? ((index % 3) - 1) * 0.42 : 0;
+        particle.targetX = target.x + duplicateJitter;
+        particle.targetY = target.y - duplicateJitter;
+      });
+    };
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -154,15 +214,18 @@ function ParticleHeartCanvas({ burst }: { burst: boolean }) {
       canvas.width = Math.round(width * pixelRatio);
       canvas.height = Math.round(height * pixelRatio);
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+      buildTextTargets();
     };
 
     const render = (now: number) => {
       const time = now / 1000;
       const burstAge = (now - burstStartedAt) / 1000;
-      const burstPower = burst && burstAge < 1.25 ? Math.sin(Math.min(1, burstAge / 1.25) * Math.PI) : 0;
-      const scale = Math.min(width / 41, height / 37) * (1 + Math.sin(time * 2.25) * 0.018);
-      const rotationY = Math.sin(time * 0.47) * 0.42;
-      const rotationX = Math.sin(time * 0.32) * 0.12;
+      const burstPower = burst && burstAge < 0.92 ? Math.sin(Math.min(1, burstAge / 0.92) * Math.PI) : 0;
+      const morphRaw = burst ? Math.max(0, Math.min(1, (burstAge - 0.38) / 1.42)) : 0;
+      const morph = morphRaw * morphRaw * (3 - 2 * morphRaw);
+      const scale = Math.min(width / 38, height / 33.5) * (1 + Math.sin(time * 2.25) * 0.022);
+      const rotationY = Math.sin(time * 0.47) * 0.46 * (1 - morph);
+      const rotationX = Math.sin(time * 0.32) * 0.14 * (1 - morph);
       const cosY = Math.cos(rotationY);
       const sinY = Math.sin(rotationY);
       const cosX = Math.cos(rotationX);
@@ -170,13 +233,15 @@ function ParticleHeartCanvas({ burst }: { burst: boolean }) {
 
       context.clearRect(0, 0, width, height);
 
-      const glow = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.min(width, height) * 0.39);
-      glow.addColorStop(0, `rgba(255, 40, 119, ${0.12 + Math.sin(time * 1.9) * 0.025})`);
-      glow.addColorStop(0.5, 'rgba(202, 23, 92, 0.035)');
+      const glowRadius = morph ? Math.min(width * 0.48, height * 0.34) : Math.min(width, height) * 0.43;
+      const glow = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, glowRadius);
+      glow.addColorStop(0, `rgba(255, 40, 119, ${0.15 + Math.sin(time * 1.9) * 0.03})`);
+      glow.addColorStop(0.5, 'rgba(202, 23, 92, 0.045)');
       glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
       context.fillStyle = glow;
       context.fillRect(0, 0, width, height);
 
+      context.globalCompositeOperation = 'lighter';
       for (const particle of particles) {
         const wobble = Math.sin(time * particle.speed + particle.drift) * 0.12;
         const x1 = particle.x * cosY - particle.z * sinY;
@@ -184,24 +249,29 @@ function ParticleHeartCanvas({ burst }: { burst: boolean }) {
         const y1 = particle.y * cosX - z1 * sinX;
         const z2 = particle.y * sinX + z1 * cosX;
         const distance = Math.sqrt(particle.x * particle.x + particle.y * particle.y) || 1;
-        const explode = burstPower * (8 + (particle.index % 13) * 0.75);
+        const explode = burstPower * (5.5 + (particle.index % 13) * 0.52);
         const perspective = 1.18 / (1.18 + (z2 + 9) / 48);
-        const screenX = width / 2 + (x1 + (particle.x / distance) * explode + wobble) * scale * perspective;
-        const screenY = height / 2 + (y1 + (particle.y / distance) * explode + wobble * 0.45) * scale * perspective;
+        const heartX = width / 2 + (x1 + (particle.x / distance) * explode + wobble) * scale * perspective;
+        const heartY = height / 2 + (y1 + (particle.y / distance) * explode + wobble * 0.45) * scale * perspective;
+        const textShimmer = Math.sin(time * 1.4 + particle.drift) * 0.28 * morph;
+        const screenX = heartX + (particle.targetX + textShimmer - heartX) * morph;
+        const screenY = heartY + (particle.targetY - textShimmer * 0.35 - heartY) * morph;
         const twinkle = 0.54 + Math.sin(time * 3.4 + particle.twinkle) * 0.26;
-        const pointSize = Math.max(0.7, particle.size * perspective * (1 + burstPower * 0.45));
-        const lightness = 57 + Math.max(-9, Math.min(15, z2 * 1.7)) + twinkle * 13;
+        const pointSize = Math.max(0.72, particle.size * perspective * (1 + burstPower * 0.35 + morph * 0.08));
+        const lightness = 59 + Math.max(-9, Math.min(15, z2 * 1.7)) * (1 - morph) + twinkle * 14 + morph * 7;
+        const alpha = particle.isAura ? 0.34 : particle.onShell ? 0.78 : Math.max(0.28, twinkle);
 
-        context.fillStyle = `hsla(${particle.hue}, 96%, ${lightness}%, ${Math.max(0.18, twinkle)})`;
-        if (particle.index % 19 === 0) {
+        context.fillStyle = `hsla(${particle.hue}, 98%, ${lightness}%, ${alpha + morph * (0.95 - alpha)})`;
+        if (particle.index % 23 === 0) {
           context.shadowColor = 'rgba(255, 38, 119, .92)';
-          context.shadowBlur = 9;
+          context.shadowBlur = 10 + morph * 2;
         } else {
           context.shadowBlur = 0;
         }
         context.fillRect(screenX, screenY, pointSize, pointSize * (0.8 + (particle.index % 4) * 0.13));
       }
 
+      context.globalCompositeOperation = 'source-over';
       context.shadowBlur = 0;
       animationFrame = requestAnimationFrame(render);
     };
@@ -606,7 +676,10 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
             <div className="photo-lightbox" ref={photoStageRef} onTouchStart={(event) => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={(event) => {
               if (touchStart.current === null) return;
               const distance = event.changedTouches[0].clientX - touchStart.current;
-              if (Math.abs(distance) > 48) distance > 0 ? previousPhoto() : nextPhoto();
+              if (Math.abs(distance) > 48) {
+                if (distance > 0) previousPhoto();
+                else nextPhoto();
+              }
               touchStart.current = null;
             }}>
               <button className="lightbox-close" onClick={() => setPhotoOpen(false)} aria-label="Đóng ảnh">×</button>
@@ -667,12 +740,13 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
             </div>
           )}
 
-          <div className="particle-heart-message" aria-hidden={!heartOpened}>
-            <p>This heart is yours</p>
-            <h2>Trái tim này<br />là dành cho bạn</h2>
-            <span>{gift.giftMessage}</span>
-            <button onClick={() => openModule('hub')}>Về 4 món quà <b>←</b></button>
-          </div>
+          <p className="heart-live-copy" aria-live="polite">{heartOpened ? 'Mãi thương em Hồng Châu' : ''}</p>
+
+          {heartOpened && (
+            <button className="heart-reset-button" onClick={() => setHeartOpened(false)}>
+              <span>↻</span> Xem lại trái tim
+            </button>
+          )}
 
           <button className="dark-music-button" onClick={toggleMusic} aria-label={isPlaying ? 'Tắt nhạc' : 'Bật nhạc'}>{isPlaying ? '♫' : '♪'}</button>
           <div className="heart-stars" aria-hidden="true">✦　·　✧　·　✦</div>
