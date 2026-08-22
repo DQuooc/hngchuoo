@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { getSupabaseClient } from '@/lib/supabase';
 
 type Photo = {
@@ -102,6 +102,121 @@ function formatTime(seconds: number) {
   if (!Number.isFinite(seconds)) return '0:00';
   const minutes = Math.floor(seconds / 60);
   return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+}
+
+function ParticleHeartCanvas({ burst }: { burst: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    let animationFrame = 0;
+    let width = 0;
+    let height = 0;
+    let seed = 220819;
+    const burstStartedAt = performance.now();
+
+    const random = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    const particles = Array.from({ length: 1900 }, (_, index) => {
+      const angle = random() * Math.PI * 2;
+      const onShell = random() < 0.64;
+      const radius = onShell ? 0.82 + random() * 0.2 : Math.sqrt(random()) * 0.88;
+      const sin = Math.sin(angle);
+      const x = 16 * sin * sin * sin * radius;
+      const y = -(13 * Math.cos(angle) - 5 * Math.cos(angle * 2) - 2 * Math.cos(angle * 3) - Math.cos(angle * 4)) * radius;
+      const z = (random() - 0.5) * (7.5 - radius * 2.8);
+
+      return {
+        x,
+        y,
+        z,
+        size: 0.55 + random() * 1.75,
+        twinkle: random() * Math.PI * 2,
+        drift: random() * Math.PI * 2,
+        hue: 329 + random() * 24,
+        speed: 0.7 + random() * 1.4,
+        index,
+      };
+    });
+
+    const resize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const pixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+      width = rect.width;
+      height = rect.height;
+      canvas.width = Math.round(width * pixelRatio);
+      canvas.height = Math.round(height * pixelRatio);
+      context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+    };
+
+    const render = (now: number) => {
+      const time = now / 1000;
+      const burstAge = (now - burstStartedAt) / 1000;
+      const burstPower = burst && burstAge < 1.25 ? Math.sin(Math.min(1, burstAge / 1.25) * Math.PI) : 0;
+      const scale = Math.min(width / 41, height / 37) * (1 + Math.sin(time * 2.25) * 0.018);
+      const rotationY = Math.sin(time * 0.47) * 0.42;
+      const rotationX = Math.sin(time * 0.32) * 0.12;
+      const cosY = Math.cos(rotationY);
+      const sinY = Math.sin(rotationY);
+      const cosX = Math.cos(rotationX);
+      const sinX = Math.sin(rotationX);
+
+      context.clearRect(0, 0, width, height);
+
+      const glow = context.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.min(width, height) * 0.39);
+      glow.addColorStop(0, `rgba(255, 40, 119, ${0.12 + Math.sin(time * 1.9) * 0.025})`);
+      glow.addColorStop(0.5, 'rgba(202, 23, 92, 0.035)');
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      context.fillStyle = glow;
+      context.fillRect(0, 0, width, height);
+
+      for (const particle of particles) {
+        const wobble = Math.sin(time * particle.speed + particle.drift) * 0.12;
+        const x1 = particle.x * cosY - particle.z * sinY;
+        const z1 = particle.x * sinY + particle.z * cosY;
+        const y1 = particle.y * cosX - z1 * sinX;
+        const z2 = particle.y * sinX + z1 * cosX;
+        const distance = Math.sqrt(particle.x * particle.x + particle.y * particle.y) || 1;
+        const explode = burstPower * (8 + (particle.index % 13) * 0.75);
+        const perspective = 1.18 / (1.18 + (z2 + 9) / 48);
+        const screenX = width / 2 + (x1 + (particle.x / distance) * explode + wobble) * scale * perspective;
+        const screenY = height / 2 + (y1 + (particle.y / distance) * explode + wobble * 0.45) * scale * perspective;
+        const twinkle = 0.54 + Math.sin(time * 3.4 + particle.twinkle) * 0.26;
+        const pointSize = Math.max(0.7, particle.size * perspective * (1 + burstPower * 0.45));
+        const lightness = 57 + Math.max(-9, Math.min(15, z2 * 1.7)) + twinkle * 13;
+
+        context.fillStyle = `hsla(${particle.hue}, 96%, ${lightness}%, ${Math.max(0.18, twinkle)})`;
+        if (particle.index % 19 === 0) {
+          context.shadowColor = 'rgba(255, 38, 119, .92)';
+          context.shadowBlur = 9;
+        } else {
+          context.shadowBlur = 0;
+        }
+        context.fillRect(screenX, screenY, pointSize, pointSize * (0.8 + (particle.index % 4) * 0.13));
+      }
+
+      context.shadowBlur = 0;
+      animationFrame = requestAnimationFrame(render);
+    };
+
+    resize();
+    window.addEventListener('resize', resize);
+    animationFrame = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(animationFrame);
+      window.removeEventListener('resize', resize);
+    };
+  }, [burst]);
+
+  return <canvas ref={canvasRef} className="particle-heart-canvas" aria-hidden="true" />;
 }
 
 export default function GiftReveal({ giftId }: { giftId?: string }) {
@@ -285,17 +400,6 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
     const nextIndex = (activeSong + 1) % gift.songs.length;
     playSong(nextIndex);
   };
-
-  const bubblePhotos = useMemo(
-    () => gift.photos.slice(0, 8).map((photo, index) => ({
-      ...photo,
-      x: (index * 29 + 6) % 88,
-      y: (index * 19 + 5) % 64,
-      size: 78 + ((index * 31) % 74),
-      delay: -((index * 7) % 16) / 3,
-    })),
-    [gift.photos],
-  );
 
   if (isLoading) {
     return (
@@ -541,45 +645,37 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
         </section>
       )}
 
-      {phase === 'heart' && !heartOpened && (
-        <section className="module-screen heart-gift-screen">
-          <button className="back-button heart-back" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
-          <div className="heart-gift-copy">
-            <p className="eyebrow">The final surprise</p>
-            <h2>Món quà cuối<br />dành cho bạn</h2>
-            <p>Đặt tay lên trái tim và chạm nhẹ một lần nhé.</p>
-          </div>
-          <button className="big-heart" onClick={() => setHeartOpened(true)} aria-label="Mở món quà trái tim">
-            <span>♥</span>
-            <small>chạm để mở</small>
-          </button>
-          <div className="heart-ripple ripple-one" /><div className="heart-ripple ripple-two" />
-        </section>
-      )}
+      {phase === 'heart' && (
+        <section className={heartOpened ? 'dark-heart-screen opened' : 'dark-heart-screen'}>
+          <button className="dark-back-button" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
+          <p className="dark-heart-kicker">THE SECRET GIFT · 04</p>
 
-      {phase === 'heart' && heartOpened && (
-        <section className="bubble-screen">
-          <div className="bubble-field" aria-hidden="true">
-            {bubblePhotos.map((photo) => (
-              <div
-                className="memory-bubble"
-                key={photo.id}
-                style={{ '--bubble-x': `${photo.x}%`, '--bubble-y': `${photo.y}%`, '--bubble-size': `${photo.size}px`, '--bubble-delay': `${photo.delay}s` } as CSSProperties}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={photo.photoUrl} alt="" />
-              </div>
-            ))}
+          <div className="particle-heart-wrap">
+            <ParticleHeartCanvas burst={heartOpened} />
+            <button
+              className="particle-heart-hit"
+              onClick={() => setHeartOpened(true)}
+              aria-label="Chạm để mở trái tim hạt phát sáng"
+              disabled={heartOpened}
+            />
           </div>
 
-          <div className="final-note">
-            <p className="eyebrow">This heart is yours</p>
-            <h2>Món quà là<br />trái tim này</h2>
-            <p>{gift.giftMessage}</p>
-            <button onClick={() => openModule('hub')}>Về 4 món quà <span>←</span></button>
+          {!heartOpened && (
+            <div className="heart-tap-copy">
+              <strong>Chạm vào trái tim</strong>
+              <span>để mở món quà cuối cùng</span>
+            </div>
+          )}
+
+          <div className="particle-heart-message" aria-hidden={!heartOpened}>
+            <p>This heart is yours</p>
+            <h2>Trái tim này<br />là dành cho bạn</h2>
+            <span>{gift.giftMessage}</span>
+            <button onClick={() => openModule('hub')}>Về 4 món quà <b>←</b></button>
           </div>
 
-          <button className="floating-music" onClick={toggleMusic} aria-label={isPlaying ? 'Tắt nhạc' : 'Bật nhạc'}>{isPlaying ? '♫' : '♪'}</button>
+          <button className="dark-music-button" onClick={toggleMusic} aria-label={isPlaying ? 'Tắt nhạc' : 'Bật nhạc'}>{isPlaying ? '♫' : '♪'}</button>
+          <div className="heart-stars" aria-hidden="true">✦　·　✧　·　✦</div>
         </section>
       )}
     </main>
