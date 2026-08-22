@@ -9,13 +9,23 @@ type Photo = {
   caption: string;
 };
 
-type Gift = {
+type Song = {
+  id: string;
   title: string;
+  artist: string;
   songUrl: string | null;
-  photos: Photo[];
+  coverUrl: string;
 };
 
-type Phase = 'locked' | 'opening' | 'gallery' | 'bubbles';
+type Gift = {
+  title: string;
+  photos: Photo[];
+  songs: Song[];
+  letter: string[];
+  giftMessage: string;
+};
+
+type Phase = 'locked' | 'opening' | 'hub' | 'music' | 'photos' | 'letter' | 'heart';
 
 const DEMO_PHOTOS: Photo[] = [
   {
@@ -50,10 +60,24 @@ const DEMO_PHOTOS: Photo[] = [
   },
 ];
 
+const DEMO_SONGS: Song[] = [
+  { id: 'song-1', title: 'Gửi người mình thương', artist: 'Bài hát đầu tiên', songUrl: null, coverUrl: DEMO_PHOTOS[0].photoUrl },
+  { id: 'song-2', title: 'Ngày mình gặp nhau', artist: 'Một kỷ niệm thật đẹp', songUrl: null, coverUrl: DEMO_PHOTOS[1].photoUrl },
+  { id: 'song-3', title: 'Đi cùng nhau nhé', artist: 'Cho những ngày sau này', songUrl: null, coverUrl: DEMO_PHOTOS[2].photoUrl },
+  { id: 'song-4', title: 'Chỉ cần có bạn', artist: 'Bản nhạc cuối trong list', songUrl: null, coverUrl: DEMO_PHOTOS[4].photoUrl },
+];
+
 const DEMO_GIFT: Gift = {
   title: 'Những điều mình muốn giữ lại',
-  songUrl: null,
   photos: DEMO_PHOTOS,
+  songs: DEMO_SONGS,
+  letter: [
+    'Gửi bạn — người đã khiến rất nhiều ngày bình thường của mình trở nên đặc biệt.',
+    'Mình không biết phải gom hết những điều muốn nói vào đâu, nên đã cất chúng trong góc nhỏ này: vài bài hát, vài tấm ảnh và những kỷ niệm mà mình luôn muốn giữ thật lâu.',
+    'Cảm ơn bạn vì đã xuất hiện, đã lắng nghe và đã ở bên. Mong những ngày sắp tới của bạn luôn dịu dàng, rực rỡ và có thật nhiều lý do để mỉm cười.',
+    'Dù món quà này nhỏ thôi, tình cảm đặt vào trong đó thì không nhỏ chút nào đâu.',
+  ],
+  giftMessage: 'Trái tim này không phải món quà cuối cùng — nó là lời hứa rằng mình sẽ còn cùng bạn tạo thêm thật nhiều kỷ niệm mới.',
 };
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
@@ -74,21 +98,33 @@ function resolveGiftId(giftId?: string) {
   return process.env.NEXT_PUBLIC_GIFT_ID;
 }
 
+function formatTime(seconds: number) {
+  if (!Number.isFinite(seconds)) return '0:00';
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+}
+
 export default function GiftReveal({ giftId }: { giftId?: string }) {
   const [gift, setGift] = useState<Gift>(DEMO_GIFT);
   const [phase, setPhase] = useState<Phase>('locked');
   const [pin, setPin] = useState('');
   const [message, setMessage] = useState('');
-  const [index, setIndex] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoOpen, setPhotoOpen] = useState(false);
+  const [activeSong, setActiveSong] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [heartOpened, setHeartOpened] = useState(false);
   const [isDemo, setIsDemo] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const audioRef = useRef<HTMLAudioElement>(null);
-  const stageRef = useRef<HTMLElement>(null);
+  const photoStageRef = useRef<HTMLDivElement>(null);
   const openingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const touchStart = useRef<number | null>(null);
 
   const passcode = process.env.NEXT_PUBLIC_GIFT_PASSCODE ?? '2208';
+  const currentSong = gift.songs[activeSong] ?? gift.songs[0];
 
   useEffect(() => {
     let active = true;
@@ -102,26 +138,53 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
         return;
       }
 
-      const [{ data: giftRow, error: giftError }, { data: photoRows, error: photoError }] = await Promise.all([
+      const [giftResult, photoResult, songResult] = await Promise.all([
         supabase.from('gifts').select('id,title,song_url').eq('id', requestedId).single(),
         supabase
           .from('gift_photos')
           .select('id,photo_url,caption,order_index')
           .eq('gift_id', requestedId)
           .order('order_index', { ascending: true }),
+        supabase
+          .from('gift_songs')
+          .select('id,title,artist,song_url,cover_url,order_index')
+          .eq('gift_id', requestedId)
+          .order('order_index', { ascending: true }),
       ]);
 
       if (!active) return;
 
-      if (!giftError && !photoError && giftRow && photoRows?.length) {
+      if (!giftResult.error && !photoResult.error && giftResult.data && photoResult.data?.length) {
+        const photos: Photo[] = photoResult.data.map((photo) => ({
+          id: photo.id,
+          photoUrl: photo.photo_url,
+          caption: photo.caption || 'Một khoảnh khắc thật đẹp của chúng mình.',
+        }));
+
+        let songs: Song[] = DEMO_SONGS;
+        if (!songResult.error && songResult.data?.length) {
+          songs = songResult.data.map((song, songIndex) => ({
+            id: song.id,
+            title: song.title || `Bài hát ${songIndex + 1}`,
+            artist: song.artist || 'Dành riêng cho bạn',
+            songUrl: song.song_url,
+            coverUrl: song.cover_url || photos[songIndex % photos.length].photoUrl,
+          }));
+        } else if (giftResult.data.song_url) {
+          songs = [{
+            id: 'legacy-song',
+            title: 'Bài hát của chúng mình',
+            artist: 'Dành riêng cho bạn',
+            songUrl: giftResult.data.song_url,
+            coverUrl: photos[0].photoUrl,
+          }];
+        }
+
         setGift({
-          title: giftRow.title || 'Những điều mình muốn giữ lại',
-          songUrl: giftRow.song_url,
-          photos: photoRows.map((photo) => ({
-            id: photo.id,
-            photoUrl: photo.photo_url,
-            caption: photo.caption || 'Một khoảnh khắc thật đẹp của chúng mình.',
-          })),
+          ...DEMO_GIFT,
+          title: giftResult.data.title || DEMO_GIFT.title,
+          photos,
+          songs,
         });
         setIsDemo(false);
       }
@@ -136,25 +199,33 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
     };
   }, [giftId]);
 
-  const next = useCallback(() => {
-    setIndex((current) => (current + 1) % gift.photos.length);
+  const nextPhoto = useCallback(() => {
+    setPhotoIndex((current) => (current + 1) % gift.photos.length);
   }, [gift.photos.length]);
 
-  const previous = useCallback(() => {
-    setIndex((current) => (current - 1 + gift.photos.length) % gift.photos.length);
+  const previousPhoto = useCallback(() => {
+    setPhotoIndex((current) => (current - 1 + gift.photos.length) % gift.photos.length);
   }, [gift.photos.length]);
 
   useEffect(() => {
     const handleKeyboard = (event: KeyboardEvent) => {
-      if (phase !== 'gallery') return;
-      if (event.key === 'ArrowRight') next();
-      if (event.key === 'ArrowLeft') previous();
-      if (event.key === 'Escape') setPhase('bubbles');
+      if (event.key === 'Escape') {
+        if (phase === 'photos' && photoOpen) setPhotoOpen(false);
+        else if (!['locked', 'opening', 'hub'].includes(phase)) setPhase('hub');
+        return;
+      }
+      if (phase === 'photos' && photoOpen && event.key === 'ArrowRight') nextPhoto();
+      if (phase === 'photos' && photoOpen && event.key === 'ArrowLeft') previousPhoto();
     };
 
     window.addEventListener('keydown', handleKeyboard);
     return () => window.removeEventListener('keydown', handleKeyboard);
-  }, [next, phase, previous]);
+  }, [nextPhoto, phase, photoOpen, previousPhoto]);
+
+  const openModule = (nextPhase: Phase) => {
+    setMessage('');
+    setPhase(nextPhase);
+  };
 
   const pressKey = (key: string) => {
     setMessage('');
@@ -170,19 +241,35 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
       return;
     }
 
-    if (audioRef.current && gift.songUrl) {
+    if (audioRef.current && currentSong?.songUrl) {
+      audioRef.current.src = currentSong.songUrl;
       void audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
 
     setMessage('');
     setPhase('opening');
-    openingTimer.current = setTimeout(() => setPhase('gallery'), 1850);
+    openingTimer.current = setTimeout(() => setPhase('hub'), 1850);
+  };
+
+  const playSong = (songIndex: number) => {
+    const song = gift.songs[songIndex];
+    setActiveSong(songIndex);
+    setMessage('');
+
+    if (!song.songUrl || !audioRef.current) {
+      setIsPlaying(false);
+      setMessage('Bài này đang là dữ liệu mẫu. Thêm song_url trong Supabase để phát nhạc nhé.');
+      return;
+    }
+
+    audioRef.current.src = song.songUrl;
+    void audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
   };
 
   const toggleMusic = () => {
     const audio = audioRef.current;
-    if (!audio || !gift.songUrl) {
-      setMessage('Thêm song_url trong Supabase để bật nhạc nền.');
+    if (!audio || !currentSong?.songUrl) {
+      setMessage('Thêm danh sách nhạc vào Supabase để bật trình phát.');
       return;
     }
 
@@ -194,21 +281,18 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
     }
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      void stageRef.current?.requestFullscreen();
-    } else {
-      void document.exitFullscreen();
-    }
+  const playNextSong = () => {
+    const nextIndex = (activeSong + 1) % gift.songs.length;
+    playSong(nextIndex);
   };
 
   const bubblePhotos = useMemo(
-    () => gift.photos.slice(0, 8).map((photo, photoIndex) => ({
+    () => gift.photos.slice(0, 8).map((photo, index) => ({
       ...photo,
-      x: (photoIndex * 29 + 6) % 88,
-      y: (photoIndex * 19 + 5) % 64,
-      size: 78 + ((photoIndex * 31) % 74),
-      delay: -((photoIndex * 7) % 16) / 3,
+      x: (index * 29 + 6) % 88,
+      y: (index * 19 + 5) % 64,
+      size: 78 + ((index * 31) % 74),
+      delay: -((index * 7) % 16) / 3,
     })),
     [gift.photos],
   );
@@ -224,7 +308,16 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
 
   return (
     <main className={`reveal-app phase-${phase}`}>
-      <audio ref={audioRef} src={gift.songUrl ?? undefined} loop preload="auto" />
+      <audio
+        ref={audioRef}
+        src={currentSong?.songUrl ?? undefined}
+        preload="metadata"
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+        onLoadedMetadata={(event) => setDuration(event.currentTarget.duration)}
+        onEnded={playNextSong}
+      />
 
       {phase === 'locked' && (
         <section className="lock-screen">
@@ -284,66 +377,187 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
               {petal.symbol}
             </span>
           ))}
-          <div className="opening-note">
-            <span>♡</span>
-            <p>Dành riêng cho bạn</p>
-          </div>
+          <div className="opening-note"><span>♡</span><p>Dành riêng cho bạn</p></div>
         </section>
       )}
 
-      {phase === 'gallery' && (
-        <section className="gallery-screen" ref={stageRef}>
-          <header className="gallery-topbar">
-            <div>
-              <p className="eyebrow">Our little archive</p>
-              <h2>{gift.title}</h2>
-            </div>
-            <div className="gallery-tools">
-              <button onClick={toggleMusic} aria-label={isPlaying ? 'Tắt nhạc' : 'Bật nhạc'} className={isPlaying ? 'tool-button active' : 'tool-button'}>
-                {isPlaying ? '♫' : '♪'}
-              </button>
-              <button onClick={toggleFullscreen} aria-label="Xem toàn màn hình" className="tool-button">↗</button>
-              <button onClick={() => setPhase('bubbles')} aria-label="Đóng bộ ảnh" className="tool-button close-tool">×</button>
-            </div>
+      {phase === 'hub' && (
+        <section className="gift-hub">
+          <header className="hub-heading">
+            <p className="eyebrow">For my favorite person</p>
+            <h2>Một góc nhỏ dành cho bạn</h2>
+            <p>Chạm vào từng món để mở những điều mình đã cất riêng ở đây.</p>
           </header>
 
-          <div className="gallery-stage" onTouchStart={(event) => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={(event) => {
-            if (touchStart.current === null) return;
-            const distance = event.changedTouches[0].clientX - touchStart.current;
-            if (Math.abs(distance) > 48) distance > 0 ? previous() : next();
-            touchStart.current = null;
-          }}>
-            <button className="nav-button nav-previous" onClick={previous} aria-label="Ảnh trước">‹</button>
-
-            <article className="photo-card" key={gift.photos[index].id}>
-              <div className="photo-frame">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={gift.photos[index].photoUrl} alt={gift.photos[index].caption} />
-                <span className="photo-number">{String(index + 1).padStart(2, '0')}</span>
-              </div>
-              <div className="caption-row">
-                <span className="caption-heart">♡</span>
-                <p>{gift.photos[index].caption}</p>
-              </div>
-            </article>
-
-            <button className="nav-button nav-next" onClick={next} aria-label="Ảnh tiếp theo">›</button>
+          <div className="hub-grid">
+            <button className="hub-module module-music" onClick={() => openModule('music')}>
+              <span className="module-number">01</span>
+              <span className={isPlaying ? 'module-icon music-playing' : 'module-icon'}>♫</span>
+              <span className="module-copy"><strong>Danh sách nhạc</strong><small>{gift.songs.length} bài hát của chúng mình</small></span>
+              <span className="module-arrow">↗</span>
+            </button>
+            <button className="hub-module module-photos" onClick={() => openModule('photos')}>
+              <span className="module-number">02</span>
+              <span className="module-icon">▣</span>
+              <span className="module-copy"><strong>Danh sách ảnh</strong><small>{gift.photos.length} khoảnh khắc được giữ lại</small></span>
+              <span className="module-arrow">↗</span>
+            </button>
+            <button className="hub-module module-letter" onClick={() => openModule('letter')}>
+              <span className="module-number">03</span>
+              <span className="module-icon">✉</span>
+              <span className="module-copy"><strong>Một lá thư</strong><small>Những điều mình muốn nói</small></span>
+              <span className="module-arrow">↗</span>
+            </button>
+            <button className="hub-module module-gift" onClick={() => { setHeartOpened(false); openModule('heart'); }}>
+              <span className="module-number">04</span>
+              <span className="module-icon heart-icon">♥</span>
+              <span className="module-copy"><strong>Món quà bí mật</strong><small>Chạm vào trái tim này nhé</small></span>
+              <span className="module-arrow">↗</span>
+            </button>
           </div>
 
-          <footer className="gallery-footer">
-            <div className="progress-track" aria-label={`Ảnh ${index + 1} trên ${gift.photos.length}`}>
-              {gift.photos.map((photo, photoIndex) => (
-                <button key={photo.id} className={photoIndex === index ? 'progress-dot active' : 'progress-dot'} onClick={() => setIndex(photoIndex)} aria-label={`Xem ảnh ${photoIndex + 1}`} />
-              ))}
-            </div>
-            <p>Vuốt hoặc dùng phím mũi tên để xem tiếp</p>
-          </footer>
-
-          {message && <p className="music-message" role="status">{message}</p>}
+          <p className="hub-signature">4 điều nhỏ · dành cho một người thật đặc biệt</p>
         </section>
       )}
 
-      {phase === 'bubbles' && (
+      {phase === 'music' && (
+        <section className="module-screen music-screen">
+          <header className="module-topbar">
+            <button className="back-button" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
+            <div><p className="eyebrow">Our soundtrack</p><h2>Danh sách nhạc</h2></div>
+            <span className="module-count">{String(gift.songs.length).padStart(2, '0')} bài</span>
+          </header>
+
+          <div className="music-layout">
+            <div className="now-playing-card">
+              <div className={isPlaying ? 'vinyl-cover spinning' : 'vinyl-cover'}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={currentSong.coverUrl} alt="Ảnh bìa bài hát" />
+                <span className="vinyl-center" />
+              </div>
+              <div className="now-playing-copy">
+                <p>Đang phát</p>
+                <h3>{currentSong.title}</h3>
+                <span>{currentSong.artist}</span>
+              </div>
+              <input
+                className="song-progress"
+                type="range"
+                min="0"
+                max={duration || 0}
+                value={Math.min(currentTime, duration || 0)}
+                onChange={(event) => {
+                  const nextTime = Number(event.target.value);
+                  if (audioRef.current) audioRef.current.currentTime = nextTime;
+                  setCurrentTime(nextTime);
+                }}
+                aria-label="Tiến độ bài hát"
+              />
+              <div className="song-time"><span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span></div>
+              <div className="player-controls">
+                <button onClick={() => playSong((activeSong - 1 + gift.songs.length) % gift.songs.length)} aria-label="Bài trước">‹</button>
+                <button className="play-button" onClick={toggleMusic} aria-label={isPlaying ? 'Tạm dừng' : 'Phát'}>{isPlaying ? 'Ⅱ' : '▶'}</button>
+                <button onClick={playNextSong} aria-label="Bài tiếp">›</button>
+              </div>
+            </div>
+
+            <div className="playlist-card">
+              <div className="playlist-heading"><span>Playlist dành riêng cho bạn</span><small>♡</small></div>
+              <div className="song-list">
+                {gift.songs.map((song, index) => (
+                  <button key={song.id} className={index === activeSong ? 'song-row active' : 'song-row'} onClick={() => playSong(index)}>
+                    <span className="song-index">{index === activeSong && isPlaying ? '♫' : String(index + 1).padStart(2, '0')}</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={song.coverUrl} alt="" />
+                    <span className="song-copy"><strong>{song.title}</strong><small>{song.artist}</small></span>
+                    <span className="song-action">{song.songUrl ? '▶' : '· · ·'}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="playlist-message" role="status">{message}</p>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {phase === 'photos' && (
+        <section className="module-screen photo-list-screen">
+          <header className="module-topbar">
+            <button className="back-button" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
+            <div><p className="eyebrow">Our little archive</p><h2>Danh sách ảnh</h2></div>
+            <span className="module-count">{String(gift.photos.length).padStart(2, '0')} ảnh</span>
+          </header>
+
+          <div className="photo-list-grid">
+            {gift.photos.map((photo, index) => (
+              <button key={photo.id} className={`photo-tile tile-${index % 5}`} onClick={() => { setPhotoIndex(index); setPhotoOpen(true); }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={photo.photoUrl} alt={photo.caption} />
+                <span className="tile-overlay"><small>{String(index + 1).padStart(2, '0')}</small><strong>{photo.caption}</strong></span>
+              </button>
+            ))}
+          </div>
+
+          {photoOpen && (
+            <div className="photo-lightbox" ref={photoStageRef} onTouchStart={(event) => { touchStart.current = event.touches[0].clientX; }} onTouchEnd={(event) => {
+              if (touchStart.current === null) return;
+              const distance = event.changedTouches[0].clientX - touchStart.current;
+              if (Math.abs(distance) > 48) distance > 0 ? previousPhoto() : nextPhoto();
+              touchStart.current = null;
+            }}>
+              <button className="lightbox-close" onClick={() => setPhotoOpen(false)} aria-label="Đóng ảnh">×</button>
+              <button className="nav-button" onClick={previousPhoto} aria-label="Ảnh trước">‹</button>
+              <article className="photo-card" key={gift.photos[photoIndex].id}>
+                <div className="photo-frame">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={gift.photos[photoIndex].photoUrl} alt={gift.photos[photoIndex].caption} />
+                  <span className="photo-number">{String(photoIndex + 1).padStart(2, '0')}</span>
+                </div>
+                <div className="caption-row"><span className="caption-heart">♡</span><p>{gift.photos[photoIndex].caption}</p></div>
+              </article>
+              <button className="nav-button" onClick={nextPhoto} aria-label="Ảnh tiếp theo">›</button>
+            </div>
+          )}
+        </section>
+      )}
+
+      {phase === 'letter' && (
+        <section className="module-screen letter-screen">
+          <header className="module-topbar letter-topbar">
+            <button className="back-button" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
+            <div><p className="eyebrow">Words from my heart</p><h2>Một lá thư</h2></div>
+            <span className="module-count">03</span>
+          </header>
+
+          <div className="letter-wrap">
+            <div className="envelope-back" aria-hidden="true"><span>♥</span></div>
+            <article className="letter-paper">
+              <div className="letter-date">22 · 08 · 2026</div>
+              <p className="letter-greeting">Gửi người đặc biệt,</p>
+              {gift.letter.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+              <div className="letter-signoff"><span>Thương gửi,</span><strong>Một người luôn trân trọng bạn ♡</strong></div>
+            </article>
+          </div>
+        </section>
+      )}
+
+      {phase === 'heart' && !heartOpened && (
+        <section className="module-screen heart-gift-screen">
+          <button className="back-button heart-back" onClick={() => openModule('hub')}><span>←</span> Quay lại</button>
+          <div className="heart-gift-copy">
+            <p className="eyebrow">The final surprise</p>
+            <h2>Món quà cuối<br />dành cho bạn</h2>
+            <p>Đặt tay lên trái tim và chạm nhẹ một lần nhé.</p>
+          </div>
+          <button className="big-heart" onClick={() => setHeartOpened(true)} aria-label="Mở món quà trái tim">
+            <span>♥</span>
+            <small>chạm để mở</small>
+          </button>
+          <div className="heart-ripple ripple-one" /><div className="heart-ripple ripple-two" />
+        </section>
+      )}
+
+      {phase === 'heart' && heartOpened && (
         <section className="bubble-screen">
           <div className="bubble-field" aria-hidden="true">
             {bubblePhotos.map((photo) => (
@@ -359,10 +573,10 @@ export default function GiftReveal({ giftId }: { giftId?: string }) {
           </div>
 
           <div className="final-note">
-            <p className="eyebrow">One last thing</p>
-            <h2>Cảm ơn vì đã ở đây</h2>
-            <p>Mỗi kỷ niệm đều đẹp hơn vì có bạn ở trong đó. Mong rằng món quà nhỏ này đã làm bạn mỉm cười.</p>
-            <button onClick={() => { setIndex(0); setPhase('gallery'); }}>Xem lại từ đầu <span>↻</span></button>
+            <p className="eyebrow">This heart is yours</p>
+            <h2>Món quà là<br />trái tim này</h2>
+            <p>{gift.giftMessage}</p>
+            <button onClick={() => openModule('hub')}>Về 4 món quà <span>←</span></button>
           </div>
 
           <button className="floating-music" onClick={toggleMusic} aria-label={isPlaying ? 'Tắt nhạc' : 'Bật nhạc'}>{isPlaying ? '♫' : '♪'}</button>
