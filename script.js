@@ -57,12 +57,7 @@ const DEMO_GIFT = {
   giftMessage: 'Trái tim này không phải món quà cuối cùng — nó là lời hứa rằng mình sẽ còn cùng bạn tạo thêm thật nhiều kỷ niệm mới.',
 };
 
-const CONFIG = Object.freeze({
-  supabaseUrl: import.meta.env.NEXT_PUBLIC_SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL || '',
-  supabaseAnonKey: import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || import.meta.env.VITE_SUPABASE_ANON_KEY || '',
-  defaultGiftId: import.meta.env.NEXT_PUBLIC_GIFT_ID || import.meta.env.VITE_GIFT_ID || '',
-  passcode: String(import.meta.env.NEXT_PUBLIC_GIFT_PASSCODE || import.meta.env.VITE_GIFT_PASSCODE || '2208'),
-});
+const PASSCODE = '2208';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
 const PETALS = Array.from({ length: 24 }, (_, index) => ({
@@ -86,8 +81,6 @@ const state = {
   currentTime: 0,
   duration: 0,
   heartOpened: false,
-  isDemo: true,
-  loading: true,
 };
 
 let openingTimer = null;
@@ -113,62 +106,8 @@ function currentSong() {
   return state.gift.songs[state.activeSong] || state.gift.songs[0];
 }
 
-function resolveGiftId() {
-  const queryId = new URLSearchParams(window.location.search).get('gift');
-  const routeMatch = window.location.pathname.match(/^\/gift\/([^/]+)/);
-  return queryId || (routeMatch ? decodeURIComponent(routeMatch[1]) : '') || CONFIG.defaultGiftId;
-}
-
-async function fetchTable(table, parameters) {
-  const baseUrl = CONFIG.supabaseUrl.replace(/\/$/, '');
-  const response = await fetch(`${baseUrl}/rest/v1/${table}?${parameters}`, {
-    headers: {
-      apikey: CONFIG.supabaseAnonKey,
-      Authorization: `Bearer ${CONFIG.supabaseAnonKey}`,
-    },
-  });
-  if (!response.ok) throw new Error(`Không thể tải bảng ${table}`);
-  return response.json();
-}
-
-async function loadGift() {
-  const giftId = resolveGiftId();
-  const configured = CONFIG.supabaseUrl.startsWith('http') && CONFIG.supabaseAnonKey && giftId;
-
-  if (configured) {
-    try {
-      const encodedId = encodeURIComponent(giftId);
-      const [gifts, photosData] = await Promise.all([
-        fetchTable('gifts', `select=id,title,song_url&id=eq.${encodedId}&limit=1`),
-        fetchTable('gift_photos', `select=id,photo_url,caption,order_index&gift_id=eq.${encodedId}&order=order_index.asc`),
-      ]);
-
-      if (gifts[0] && photosData.length) {
-        const photos = photosData.map((photo) => ({
-          id: photo.id,
-          photoUrl: photo.photo_url,
-          caption: photo.caption || 'Một khoảnh khắc thật đẹp của chúng mình.',
-        }));
-
-        state.gift = {
-          ...DEMO_GIFT,
-          title: gifts[0].title || DEMO_GIFT.title,
-          photos,
-          songs: DEMO_SONGS,
-        };
-        state.isDemo = false;
-      }
-    } catch {
-      state.message = '';
-    }
-  }
-
-  state.loading = false;
-  render();
-}
-
 function renderLock() {
-  const dots = Array.from({ length: CONFIG.passcode.length }, (_, index) =>
+  const dots = Array.from({ length: PASSCODE.length }, (_, index) =>
     `<span class="${index < state.pin.length ? 'filled' : ''}"></span>`
   ).join('');
   const keypad = KEYS.map((key) => {
@@ -189,13 +128,13 @@ function renderLock() {
         <div class="love-stamp" aria-hidden="true"><span>♡</span></div>
         <p class="eyebrow">A little something for you</p>
         <h1 id="gift-title">Mở món quà nhỏ này nhé</h1>
-        <p class="intro">Nhập ${CONFIG.passcode.length} con số đặc biệt để xem điều đang chờ bạn ở bên trong.</p>
-        <div class="pin-dots" aria-label="Đã nhập ${state.pin.length} trên ${CONFIG.passcode.length} số">${dots}</div>
+        <p class="intro">Nhập ${PASSCODE.length} con số đặc biệt để xem điều đang chờ bạn ở bên trong.</p>
+        <div class="pin-dots" aria-label="Đã nhập ${state.pin.length} trên ${PASSCODE.length} số">${dots}</div>
         <div class="keypad" aria-label="Bàn phím nhập mã">${keypad}</div>
-        <button class="unlock-button" data-action="unlock" ${state.pin.length !== CONFIG.passcode.length ? 'disabled' : ''}>
+        <button class="unlock-button" data-action="unlock" ${state.pin.length !== PASSCODE.length ? 'disabled' : ''}>
           <span>Mở quà</span><span aria-hidden="true">→</span>
         </button>
-        <p class="hint">Gợi ý: một ngày rất đặc biệt${state.isDemo ? ' · Mã xem thử: 2208' : ''}</p>
+        <p class="hint">Gợi ý: một ngày rất đặc biệt · Mã mở khóa: 2208</p>
         <p class="status" role="status" aria-live="polite">${escapeHtml(state.message)}</p>
       </div>
       <p class="signature">made with <span>♥</span> for someone special</p>
@@ -374,12 +313,6 @@ function render() {
     destroyHeart = null;
   }
 
-  if (state.loading) {
-    app.className = 'loading-screen';
-    app.innerHTML = '<span class="loading-heart">♡</span><p>Đang chuẩn bị một điều thật đẹp…</p>';
-    return;
-  }
-
   app.className = `reveal-app phase-${state.phase}`;
   const screens = {
     locked: renderLock,
@@ -411,12 +344,12 @@ function pressKey(key) {
   state.message = '';
   if (key === 'clear') state.pin = '';
   else if (key === 'back') state.pin = state.pin.slice(0, -1);
-  else if (state.pin.length < CONFIG.passcode.length) state.pin += key;
+  else if (state.pin.length < PASSCODE.length) state.pin += key;
   render();
 }
 
 function unlock() {
-  if (state.pin !== CONFIG.passcode) {
+  if (state.pin !== PASSCODE) {
     state.message = 'Chưa đúng rồi, thử lại nhé ♡';
     state.pin = '';
     render();
@@ -760,4 +693,3 @@ function initParticleHeart(canvas, burst) {
 }
 
 render();
-loadGift();

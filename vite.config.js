@@ -11,7 +11,6 @@ export default defineConfig(async () => {
   const { cloudflare } = await import('@cloudflare/vite-plugin');
 
   return {
-    envPrefix: ['VITE_', 'NEXT_PUBLIC_'],
     server: {
       port: 3000,
       ...(isCodexSeatbeltSandbox

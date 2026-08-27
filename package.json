@@ -1,7 +1,8 @@
 {
-  "name": "sites-project",
-  "version": "0.1.0",
+  "name": "gift-reveal",
+  "version": "1.0.0",
   "private": true,
+  "type": "module",
   "engines": {
     "node": ">=22.13.0"
   },
@@ -11,14 +12,11 @@
     "build": "vite build",
     "postbuild": "node stage-build.js",
     "start": "vite preview",
-    "lint": "eslint script.js worker.js vite.config.js clean-build.js stage-build.js"
+    "lint": "node --check script.js && node --check worker.js && node --check vite.config.js && node --check clean-build.js && node --check stage-build.js"
   },
-  "dependencies": {},
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",
     "@openai/sites-vite-plugin": "^0.1.0 || ^0.2.0",
-    "eslint": "9.39.4",
     "vite": "8.0.13"
-  },
-  "type": "module"
+  }
 }
