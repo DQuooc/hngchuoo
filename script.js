@@ -35,11 +35,11 @@ const DEMO_PHOTOS = [
 ];
 
 const DEMO_SONGS = [
-  { id: 'perfect', title: 'Perfect', artist: 'Shiki ft. Tyronee', songUrl: '/music/perfect-shiki-ft-tyronee.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
-  { id: 'thanh-tan', title: 'Thanh Tân', artist: 'Song ca cùng Thùy Chi', songUrl: '/music/thanh-tan-thuy-chi.mp4', coverUrl: DEMO_PHOTOS[1].photoUrl },
-  { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: '/music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[2].photoUrl },
-  { id: 'ordinary', title: 'Ordinary', artist: 'Alex Warren', songUrl: '/music/ordinary-alex-warren.mp4', coverUrl: DEMO_PHOTOS[3].photoUrl },
-  { id: 'nguoi-im-lang-gap-nguoi-hay-noi', title: 'Người Im Lặng Gặp Người Hay Nói', artist: 'HIEUTHUHAI', songUrl: '/music/nguoi-im-lang-gap-nguoi-hay-noi-hieuthuhai.mp4', coverUrl: DEMO_PHOTOS[4].photoUrl },
+  { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: '/music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
+  { id: 'nguoi-im-lang-gap-nguoi-hay-noi', title: 'Người Im Lặng Gặp Người Hay Nói', artist: 'HIEUTHUHAI', songUrl: '/music/nguoi-im-lang-gap-nguoi-hay-noi-hieuthuhai.mp4', coverUrl: DEMO_PHOTOS[1].photoUrl },
+  { id: 'lang', title: 'Lặng', artist: 'Shiki ft. Tyronee', songUrl: '/music/perfect-shiki-ft-tyronee.mp4', coverUrl: DEMO_PHOTOS[2].photoUrl },
+  { id: 'thanh-tam', title: 'Thanh Tâm', artist: 'Song ca cùng Thùy Chi', songUrl: '/music/thanh-tan-thuy-chi.mp4', coverUrl: DEMO_PHOTOS[3].photoUrl },
+  { id: 'ordinary', title: 'Ordinary', artist: 'Alex Warren', songUrl: '/music/ordinary-alex-warren.mp4', coverUrl: DEMO_PHOTOS[4].photoUrl },
 ];
 
 const DEMO_GIFT = {
@@ -80,6 +80,7 @@ const state = {
   photoOpen: false,
   activeSong: 0,
   isPlaying: false,
+  repeatOne: false,
   currentTime: 0,
   duration: 0,
   heartOpened: false,
@@ -281,6 +282,10 @@ function renderMusic() {
             <button class="play-button" data-action="toggle-music" aria-label="${state.isPlaying ? 'Tạm dừng' : 'Phát'}">${state.isPlaying ? 'Ⅱ' : '▶'}</button>
             <button data-action="next-song" aria-label="Bài tiếp">›</button>
           </div>
+          <button class="repeat-one-button ${state.repeatOne ? 'active' : ''}" data-action="toggle-repeat" aria-pressed="${state.repeatOne}">
+            <span aria-hidden="true">↻¹</span> ${state.repeatOne ? 'Đang lặp 1 bài' : 'Lặp riêng 1 bài'}
+          </button>
+          <p class="play-mode-copy">${state.repeatOne ? 'Bài hiện tại sẽ được phát liên tục.' : 'Hết bài sẽ tự chuyển bài kế tiếp và quay lại từ đầu.'}</p>
         </div>
         <div class="playlist-card">
           <div class="playlist-heading"><span>Playlist dành riêng cho bạn</span><small>♡</small></div>
@@ -509,6 +514,10 @@ app.addEventListener('click', (event) => {
   else if (action === 'back') openModule('hub');
   else if (action === 'play-song') playSong(Number(button.dataset.index));
   else if (action === 'toggle-music') toggleMusic();
+  else if (action === 'toggle-repeat') {
+    state.repeatOne = !state.repeatOne;
+    render();
+  }
   else if (action === 'previous-song') playSong((state.activeSong - 1 + state.gift.songs.length) % state.gift.songs.length);
   else if (action === 'next-song') playSong((state.activeSong + 1) % state.gift.songs.length);
   else if (action === 'open-photo') {
@@ -581,7 +590,13 @@ audio.addEventListener('loadedmetadata', () => {
   syncProgressUi();
 });
 audio.addEventListener('ended', () => {
-  playSong((state.activeSong + 1) % state.gift.songs.length);
+  if (state.repeatOne) {
+    state.currentTime = 0;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } else {
+    playSong((state.activeSong + 1) % state.gift.songs.length);
+  }
 });
 
 function initParticleHeart(canvas, burst) {

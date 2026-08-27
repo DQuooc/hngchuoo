@@ -219,6 +219,11 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
 .player-controls { display: flex; justify-content: center; align-items: center; gap: 17px; margin-top: 16px; }
 .player-controls button { width: 39px; height: 39px; display: grid; place-items: center; border: 1px solid rgba(124,78,88,.16); border-radius: 50%; color: #724c55; background: rgba(255,255,255,.72); font-family: var(--display); font-size: 25px; cursor: pointer; }
 .player-controls .play-button { width: 52px; height: 52px; border: 0; color: white; background: linear-gradient(145deg, #d46479, #ad3b55); font-family: var(--body); font-size: 14px; box-shadow: 0 10px 22px rgba(178,57,82,.25); }
+.repeat-one-button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; margin: 13px auto 0; padding: 8px 13px; border: 1px solid rgba(124,78,88,.15); border-radius: 999px; color: #86636b; background: rgba(255,255,255,.52); font-size: 9px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; transition: .2s ease; }
+.repeat-one-button span { color: #c04f68; font-size: 15px; }
+.repeat-one-button.active { color: #fff; border-color: transparent; background: linear-gradient(145deg, #d46479, #ad3b55); box-shadow: 0 8px 20px rgba(178,57,82,.2); }
+.repeat-one-button.active span { color: #fff; }
+.play-mode-copy { margin: 7px 0 0; color: #9a7c83; font-size: 9px; line-height: 1.45; }
 .playlist-card { overflow: hidden; }
 .playlist-heading { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 25px; border-bottom: 1px solid rgba(121,77,87,.1); }
 .playlist-heading span { font-family: var(--display); font-size: 20px; font-style: italic; }
