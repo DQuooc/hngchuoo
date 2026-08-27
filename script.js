@@ -35,11 +35,11 @@ const DEMO_PHOTOS = [
 ];
 
 const DEMO_SONGS = [
-  { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: '/music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
-  { id: 'nguoi-im-lang-gap-nguoi-hay-noi', title: 'Người Im Lặng Gặp Người Hay Nói', artist: 'HIEUTHUHAI', songUrl: '/music/nguoi-im-lang-gap-nguoi-hay-noi-hieuthuhai.mp4', coverUrl: DEMO_PHOTOS[1].photoUrl },
-  { id: 'lang', title: 'Lặng', artist: 'Shiki ft. Tyronee', songUrl: '/music/perfect-shiki-ft-tyronee.mp4', coverUrl: DEMO_PHOTOS[2].photoUrl },
-  { id: 'thanh-tam', title: 'Thanh Tâm', artist: 'Song ca cùng Thùy Chi', songUrl: '/music/thanh-tan-thuy-chi.mp4', coverUrl: DEMO_PHOTOS[3].photoUrl },
-  { id: 'ordinary', title: 'Ordinary', artist: 'Alex Warren', songUrl: '/music/ordinary-alex-warren.mp4', coverUrl: DEMO_PHOTOS[4].photoUrl },
+  { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: './music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
+  { id: 'nguoi-im-lang-gap-nguoi-hay-noi', title: 'Người Im Lặng Gặp Người Hay Nói', artist: 'HIEUTHUHAI', songUrl: './music/nguoi-im-lang-gap-nguoi-hay-noi-hieuthuhai.mp4', coverUrl: DEMO_PHOTOS[1].photoUrl },
+  { id: 'lang', title: 'Lặng', artist: 'Shiki ft. Tyronee', songUrl: './music/perfect-shiki-ft-tyronee.mp4', coverUrl: DEMO_PHOTOS[2].photoUrl },
+  { id: 'thanh-tam', title: 'Thanh Tâm', artist: 'Song ca cùng Thùy Chi', songUrl: './music/thanh-tan-thuy-chi.mp4', coverUrl: DEMO_PHOTOS[3].photoUrl },
+  { id: 'ordinary', title: 'Ordinary', artist: 'Alex Warren', songUrl: './music/ordinary-alex-warren.mp4', coverUrl: DEMO_PHOTOS[4].photoUrl },
 ];
 
 const DEMO_GIFT = {
