@@ -35,10 +35,11 @@ const DEMO_PHOTOS = [
 ];
 
 const DEMO_SONGS = [
-  { id: 'song-1', title: 'Gửi người mình thương', artist: 'Bài hát đầu tiên', songUrl: null, coverUrl: DEMO_PHOTOS[0].photoUrl },
-  { id: 'song-2', title: 'Ngày mình gặp nhau', artist: 'Một kỷ niệm thật đẹp', songUrl: null, coverUrl: DEMO_PHOTOS[1].photoUrl },
-  { id: 'song-3', title: 'Đi cùng nhau nhé', artist: 'Cho những ngày sau này', songUrl: null, coverUrl: DEMO_PHOTOS[2].photoUrl },
-  { id: 'song-4', title: 'Chỉ cần có bạn', artist: 'Bản nhạc cuối trong list', songUrl: null, coverUrl: DEMO_PHOTOS[4].photoUrl },
+  { id: 'perfect', title: 'Perfect', artist: 'Shiki ft. Tyronee', songUrl: '/music/perfect-shiki-ft-tyronee.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
+  { id: 'thanh-tan', title: 'Thanh Tân', artist: 'Song ca cùng Thùy Chi', songUrl: '/music/thanh-tan-thuy-chi.mp4', coverUrl: DEMO_PHOTOS[1].photoUrl },
+  { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: '/music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[2].photoUrl },
+  { id: 'ordinary', title: 'Ordinary', artist: 'Alex Warren', songUrl: '/music/ordinary-alex-warren.mp4', coverUrl: DEMO_PHOTOS[3].photoUrl },
+  { id: 'nguoi-im-lang-gap-nguoi-hay-noi', title: 'Người Im Lặng Gặp Người Hay Nói', artist: 'HIEUTHUHAI', songUrl: '/music/nguoi-im-lang-gap-nguoi-hay-noi-hieuthuhai.mp4', coverUrl: DEMO_PHOTOS[4].photoUrl },
 ];
 
 const DEMO_GIFT = {
@@ -134,10 +135,9 @@ async function loadGift() {
   if (configured) {
     try {
       const encodedId = encodeURIComponent(giftId);
-      const [gifts, photosData, songsData] = await Promise.all([
+      const [gifts, photosData] = await Promise.all([
         fetchTable('gifts', `select=id,title,song_url&id=eq.${encodedId}&limit=1`),
         fetchTable('gift_photos', `select=id,photo_url,caption,order_index&gift_id=eq.${encodedId}&order=order_index.asc`),
-        fetchTable('gift_songs', `select=id,title,artist,song_url,cover_url,order_index&gift_id=eq.${encodedId}&order=order_index.asc`),
       ]);
 
       if (gifts[0] && photosData.length) {
@@ -147,30 +147,11 @@ async function loadGift() {
           caption: photo.caption || 'Một khoảnh khắc thật đẹp của chúng mình.',
         }));
 
-        let songs = DEMO_SONGS;
-        if (songsData.length) {
-          songs = songsData.map((song, index) => ({
-            id: song.id,
-            title: song.title || `Bài hát ${index + 1}`,
-            artist: song.artist || 'Dành riêng cho bạn',
-            songUrl: song.song_url,
-            coverUrl: song.cover_url || photos[index % photos.length].photoUrl,
-          }));
-        } else if (gifts[0].song_url) {
-          songs = [{
-            id: 'legacy-song',
-            title: 'Bài hát của chúng mình',
-            artist: 'Dành riêng cho bạn',
-            songUrl: gifts[0].song_url,
-            coverUrl: photos[0].photoUrl,
-          }];
-        }
-
         state.gift = {
           ...DEMO_GIFT,
           title: gifts[0].title || DEMO_GIFT.title,
           photos,
-          songs,
+          songs: DEMO_SONGS,
         };
         state.isDemo = false;
       }
