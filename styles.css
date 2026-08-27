@@ -274,7 +274,7 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
 .letter-paper::before { content: '♡'; position: absolute; right: 35px; top: 27px; color: rgba(190,80,105,.42); font-family: var(--display); font-size: 34px; }
 .letter-date { margin-bottom: 32px; color: #a47e74; font-size: 9px; font-weight: 800; letter-spacing: .18em; text-align: right; }
 .letter-paper > p { margin: 0 0 18px; font-family: var(--display); font-size: 17px; line-height: 1.86; }
-.letter-paper .letter-greeting { margin-bottom: 23px; color: #a2435a; font-size: 28px; font-style: italic; }
+.letter-paper .letter-greeting { margin-bottom: 23px; color: #a2435a; font-size: clamp(23px, 4vw, 28px); font-style: italic; font-weight: 600; line-height: 1.18; }
 .letter-signoff { display: grid; justify-content: end; gap: 7px; margin-top: 34px; text-align: right; font-family: var(--display); font-style: italic; }
 .letter-signoff span { color: #8b6a61; font-size: 17px; }
 .letter-signoff strong { color: #a13e57; font-size: 20px; font-weight: 500; }

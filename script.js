@@ -46,12 +46,14 @@ const DEMO_GIFT = {
   title: 'Những điều mình muốn giữ lại',
   photos: DEMO_PHOTOS,
   songs: DEMO_SONGS,
+  letterGreeting: 'Gửi Hồng Châu, người khiến những ngày bình thường của anh bỗng hóa đặc biệt!',
   letter: [
-    'Gửi bạn — người đã khiến rất nhiều ngày bình thường của mình trở nên đặc biệt.',
-    'Mình không biết phải gom hết những điều muốn nói vào đâu, nên đã cất chúng trong góc nhỏ này: vài bài hát, vài tấm ảnh và những kỷ niệm mà mình luôn muốn giữ thật lâu.',
-    'Cảm ơn bạn vì đã xuất hiện, đã lắng nghe và đã ở bên. Mong những ngày sắp tới của bạn luôn dịu dàng, rực rỡ và có thật nhiều lý do để mỉm cười.',
-    'Dù món quà này nhỏ thôi, tình cảm đặt vào trong đó thì không nhỏ chút nào đâu.',
+    'Có những cảm xúc khó có thể diễn tả trọn vẹn bằng lời, nên anh đành cẩn thận gom góp tất cả vào "góc nhỏ" này. Từng giai điệu, vài tấm ảnh, và cả những kỷ niệm của tụi mình đều được anh tự tay chăm chút, xếp đặt chỉ để dành riêng cho em.',
+    'Cảm ơn Châu vì đã bước vào thế giới của anh, kiên nhẫn lắng nghe và dịu dàng đồng hành. Sự xuất hiện của em giống như một tia sáng ấm áp, khiến mọi thứ xung quanh anh trở nên ý nghĩa hơn rất nhiều.',
+    'Mong bầu trời của em sẽ luôn rực rỡ và nụ cười xinh đẹp ấy sẽ luôn hiện diện trên môi. Dù thế nào, anh vẫn luôn hy vọng mình có thể là một trong những lý do khiến em mỉm cười.',
+    'Món quà này nhìn bề ngoài tuy nhỏ, nhưng tâm tư anh đặt vào đó thì chắc chắn không nhỏ chút nào đâu. Mong em sẽ cảm nhận được những gì anh chưa kịp nói thành lời.',
   ],
+  letterSignoff: 'Quốc',
   giftMessage: 'Trái tim này không phải món quà cuối cùng — nó là lời hứa rằng mình sẽ còn cùng bạn tạo thêm thật nhiều kỷ niệm mới.',
 };
 
@@ -339,9 +341,9 @@ function renderLetter() {
         <div class="envelope-back" aria-hidden="true"><span>♥</span></div>
         <article class="letter-paper">
           <div class="letter-date">22 · 08 · 2026</div>
-          <p class="letter-greeting">Gửi người đặc biệt,</p>
+          <p class="letter-greeting">${escapeHtml(state.gift.letterGreeting)}</p>
           ${paragraphs}
-          <div class="letter-signoff"><span>Thương gửi,</span><strong>Một người luôn trân trọng bạn ♡</strong></div>
+          <div class="letter-signoff"><span>Thương em,</span><strong>${escapeHtml(state.gift.letterSignoff)} ♡</strong></div>
         </article>
       </div>
     </section>
