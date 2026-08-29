@@ -1,38 +1,42 @@
 const app = document.querySelector('#app');
 const audio = document.querySelector('#gift-audio');
 
-const DEMO_PHOTOS = [
-  {
-    id: 'sunset-embrace',
-    photoUrl: 'https://images.unsplash.com/photo-1738748707927-6a8edb6ba32a?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Có những khoảnh khắc chỉ cần nhớ lại thôi cũng đủ mỉm cười.',
-  },
-  {
-    id: 'spring-lover',
-    photoUrl: 'https://images.unsplash.com/photo-1523832083691-c772f31be296?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Cảm ơn bạn vì đã làm những ngày bình thường trở nên thật đặc biệt.',
-  },
-  {
-    id: 'beach-silhouette',
-    photoUrl: 'https://images.unsplash.com/photo-1594768289642-35c05c10039c?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Mong chúng mình sẽ còn đi cùng nhau qua thật nhiều buổi chiều như thế.',
-  },
-  {
-    id: 'little-flower',
-    photoUrl: 'https://images.unsplash.com/photo-1667731976090-e274235f8280?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Một chút dịu dàng, gửi riêng đến người đang xem món quà này.',
-  },
-  {
-    id: 'golden-flowers',
-    photoUrl: 'https://images.unsplash.com/photo-1746592176452-35a6b0e51f22?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Dù hôm nay thế nào, bạn vẫn luôn xứng đáng với những điều đẹp nhất.',
-  },
-  {
-    id: 'quiet-shore',
-    photoUrl: 'https://images.unsplash.com/photo-1562056114-fb07b52a5070?auto=format&fit=crop&w=1400&q=86',
-    caption: 'Và đây chưa phải là kỷ niệm cuối cùng của chúng mình đâu nhé.',
-  },
+const LOCAL_PHOTO_FILES = [
+  '1787982437408_132339761693135526_2668400663636240504_14e7e0e828dac7bfd4e21be1a9c732cf.jpg',
+  '1787982437435_132339761693135526_2668400663636240504_318277fe60176118a7f2c63795163755.jpg',
+  '1787982437453_132339761693135526_2668400663636240504_6c75ce5f378eddafa166cf81aaa8ee58.jpg',
+  '1787982437466_132339761693135526_2668400663636240504_e1860a0a3831107d0ddce6ca2537b17e.jpg',
+  '1787982437478_132339761693135526_2668400663636240504_3de0905f47a936e6f7b060d7a149eca2.jpg',
+  '1787982437489_132339761693135526_2668400663636240504_f5cc4e03c8d2205efa614cb6c519e856.jpg',
+  '1787982437501_132339761693135526_2668400663636240504_bcfb2cfff23d3b6b5c9ca3c713569c7d.jpg',
+  '1787982437511_132339761693135526_2668400663636240504_a7c834bc08f5d75656a85a63290c0830.jpg',
+  '1787982437519_132339761693135526_2668400663636240504_9c7eb52180cf32d787bd8d84eca90f76.jpg',
+  '1787982437526_132339761693135526_2668400663636240504_678a0c89619063c01a6f97d0f4d52352.jpg',
+  '1787982437534_132339761693135526_2668400663636240504_b26876440e6b7f149fda9888e345169a.jpg',
+  '1787982437541_132339761693135526_2668400663636240504_6696062bf32163e7698fc6472de07002.jpg',
+  '1787982437549_132339761693135526_2668400663636240504_96bd6159338d1a8ce8f4aea24611a9f0.jpg',
+  '1787982437556_132339761693135526_2668400663636240504_97d294a0eab326edc783dc630457ff34.jpg',
+  '1787982437563_132339761693135526_2668400663636240504_257a57756db9703c32456c66760ef9d0.jpg',
+  '1787982437571_132339761693135526_2668400663636240504_78450e54f0b031d6bb8aa3590d685a85.jpg',
+  '1787982437578_132339761693135526_2668400663636240504_054a3a9d1cb6288912500dbab3e9b844.jpg',
+  '1787982437585_132339761693135526_2668400663636240504_90f51e9e6d2457e375694cb1534863a4.jpg',
+  '1787982437592_132339761693135526_2668400663636240504_fe342cae4f83611a5f1720f4f6931212.jpg',
 ];
+
+const PHOTO_CAPTIONS = [
+  'Có những khoảnh khắc chỉ cần nhớ lại thôi cũng đủ mỉm cười.',
+  'Cảm ơn em vì đã làm những ngày bình thường trở nên thật đặc biệt.',
+  'Mong chúng mình sẽ còn đi cùng nhau qua thật nhiều ngày như thế.',
+  'Một chút dịu dàng, được giữ lại dành riêng cho em.',
+  'Mỗi tấm ảnh là một mảnh nhỏ trong câu chuyện của chúng mình.',
+  'Và đây chưa phải là kỷ niệm cuối cùng của chúng mình đâu nhé.',
+];
+
+const DEMO_PHOTOS = LOCAL_PHOTO_FILES.map((fileName, index) => ({
+  id: `memory-${String(index + 1).padStart(2, '0')}`,
+  photoUrl: `./image/img/${fileName}`,
+  caption: PHOTO_CAPTIONS[index % PHOTO_CAPTIONS.length],
+}));
 
 const DEMO_SONGS = [
   { id: 'the-gioi-mat-mot-nguoi-co-don', title: 'Và Thế Giới Đã Mất Đi Một Người Cô Đơn', artist: 'Dành riêng cho Hồng Châu', songUrl: './music/va-the-gioi-da-mat-di-mot-nguoi-co-don.mp4', coverUrl: DEMO_PHOTOS[0].photoUrl },
@@ -57,7 +61,7 @@ const DEMO_GIFT = {
   giftMessage: 'Trái tim này không phải món quà cuối cùng — nó là lời hứa rằng mình sẽ còn cùng bạn tạo thêm thật nhiều kỷ niệm mới.',
 };
 
-const PASSCODE = '2208';
+const PASSCODE = '2508';
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'back'];
 const PETALS = Array.from({ length: 24 }, (_, index) => ({
@@ -76,15 +80,21 @@ const state = {
   photoIndex: 0,
   photoOpen: false,
   activeSong: 0,
+  hasSelectedSong: false,
   isPlaying: false,
   repeatOne: false,
   currentTime: 0,
   duration: 0,
+  letterOpening: false,
+  letterOpened: false,
   heartOpened: false,
+  heartTransition: null,
 };
 
 let openingTimer = null;
-let touchStart = null;
+let letterOpeningTimer = null;
+let heartTransitionTimer = null;
+let photoSwipeStart = null;
 let destroyHeart = null;
 
 function escapeHtml(value) {
@@ -134,7 +144,7 @@ function renderLock() {
         <button class="unlock-button" data-action="unlock" ${state.pin.length !== PASSCODE.length ? 'disabled' : ''}>
           <span>Mở quà</span><span aria-hidden="true">→</span>
         </button>
-        <p class="hint">Gợi ý: một ngày rất đặc biệt · Mã mở khóa: 2208</p>
+        <p class="hint">Gợi ý: một ngày rất đặc biệt · Mã mở khóa: 2508</p>
         <p class="status" role="status" aria-live="polite">${escapeHtml(state.message)}</p>
       </div>
       <p class="signature">made with <span>♥</span> for someone special</p>
@@ -165,20 +175,20 @@ function renderHub() {
       </header>
       <div class="hub-grid">
         <button class="hub-module module-music" data-action="module" data-module="music">
-          <span class="module-number">01</span><span class="module-icon ${state.isPlaying ? 'music-playing' : ''}">♫</span>
-          <span class="module-copy"><strong>Danh sách nhạc</strong><small>${state.gift.songs.length} bài hát của chúng mình</small></span><span class="module-arrow">↗</span>
+          <span class="module-icon ${state.isPlaying ? 'music-playing' : ''}">♫</span>
+          <span class="module-copy"><strong>Danh sách nhạc</strong></span><span class="module-arrow">↗</span>
         </button>
         <button class="hub-module module-photos" data-action="module" data-module="photos">
-          <span class="module-number">02</span><span class="module-icon">▣</span>
-          <span class="module-copy"><strong>Danh sách ảnh</strong><small>${state.gift.photos.length} khoảnh khắc được giữ lại</small></span><span class="module-arrow">↗</span>
+          <span class="module-icon">▣</span>
+          <span class="module-copy"><strong>Danh sách ảnh</strong></span><span class="module-arrow">↗</span>
         </button>
         <button class="hub-module module-letter" data-action="module" data-module="letter">
-          <span class="module-number">03</span><span class="module-icon">✉</span>
-          <span class="module-copy"><strong>Một lá thư</strong><small>Những điều mình muốn nói</small></span><span class="module-arrow">↗</span>
+          <span class="module-icon">✉</span>
+          <span class="module-copy"><strong>Một lá thư</strong></span><span class="module-arrow">↗</span>
         </button>
         <button class="hub-module module-gift" data-action="module" data-module="heart">
-          <span class="module-number">04</span><span class="module-icon heart-icon">♥</span>
-          <span class="module-copy"><strong>Món quà bí mật</strong><small>Chạm vào trái tim này nhé</small></span><span class="module-arrow">↗</span>
+          <span class="module-icon heart-icon">♥</span>
+          <span class="module-copy"><strong>Món quà bí mật</strong></span><span class="module-arrow">↗</span>
         </button>
       </div>
       <p class="hub-signature">4 điều nhỏ · dành cho một người thật đặc biệt</p>
@@ -186,12 +196,12 @@ function renderHub() {
   `;
 }
 
-function renderTopbar(eyebrow, title, count, extraClass = '') {
+function renderTopbar(eyebrow, title, count, extraClass = '', rightContent = '') {
   return `
     <header class="module-topbar ${extraClass}">
       <button class="back-button" data-action="back"><span>←</span> Quay lại</button>
       <div><p class="eyebrow">${eyebrow}</p><h2>${title}</h2></div>
-      <span class="module-count">${count}</span>
+      ${rightContent || `<span class="module-count">${count}</span>`}
     </header>
   `;
 }
@@ -215,7 +225,7 @@ function renderMusic() {
           <div class="vinyl-cover ${state.isPlaying ? 'spinning' : ''}">
             <img src="${escapeHtml(song.coverUrl)}" alt="Ảnh bìa bài hát" /><span class="vinyl-center"></span>
           </div>
-          <div class="now-playing-copy"><p>Đang phát</p><h3>${escapeHtml(song.title)}</h3><span>${escapeHtml(song.artist)}</span></div>
+          <div class="now-playing-copy"><p>${state.isPlaying ? 'Đang phát' : state.hasSelectedSong ? 'Đang tạm dừng' : 'Chọn một bài hát'}</p><h3>${escapeHtml(song.title)}</h3><span>${escapeHtml(song.artist)}</span></div>
           <input id="song-progress" class="song-progress" type="range" min="0" max="${state.duration || 0}" value="${Math.min(state.currentTime, state.duration || 0)}" aria-label="Tiến độ bài hát" />
           <div class="song-time"><span id="current-time">${formatTime(state.currentTime)}</span><span id="duration-time">${formatTime(state.duration)}</span></div>
           <div class="player-controls">
@@ -242,7 +252,6 @@ function renderPhotos() {
   const tiles = state.gift.photos.map((photo, index) => `
     <button class="photo-tile tile-${index % 5}" data-action="open-photo" data-index="${index}">
       <img src="${escapeHtml(photo.photoUrl)}" alt="${escapeHtml(photo.caption)}" />
-      <span class="tile-overlay"><small>${String(index + 1).padStart(2, '0')}</small><strong>${escapeHtml(photo.caption)}</strong></span>
     </button>
   `).join('');
 
@@ -250,15 +259,12 @@ function renderPhotos() {
   const lightbox = state.photoOpen ? `
     <div class="photo-lightbox">
       <button class="lightbox-close" data-action="close-photo" aria-label="Đóng ảnh">×</button>
-      <button class="nav-button" data-action="previous-photo" aria-label="Ảnh trước">‹</button>
       <article class="photo-card">
         <div class="photo-frame">
           <img src="${escapeHtml(activePhoto.photoUrl)}" alt="${escapeHtml(activePhoto.caption)}" />
           <span class="photo-number">${String(state.photoIndex + 1).padStart(2, '0')}</span>
         </div>
-        <div class="caption-row"><span class="caption-heart">♡</span><p>${escapeHtml(activePhoto.caption)}</p></div>
       </article>
-      <button class="nav-button" data-action="next-photo" aria-label="Ảnh tiếp theo">›</button>
     </div>
   ` : '';
 
@@ -273,10 +279,37 @@ function renderPhotos() {
 
 function renderLetter() {
   const paragraphs = state.gift.letter.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('');
+
+  if (!state.letterOpened) {
+    return `
+      <section class="module-screen letter-screen letter-screen-sealed">
+        ${renderTopbar('Words from my heart', 'Một lá thư', '03', 'letter-topbar')}
+        <div class="sealed-letter-stage ${state.letterOpening ? 'is-opening' : ''}">
+          <div class="sealed-letter-intro">
+            <span>Gửi riêng đến em</span>
+            <p>Có vài điều anh đã cất thật kỹ trong phong thư này.</p>
+          </div>
+          <button class="sealed-envelope ${state.letterOpening ? 'is-opening' : ''}" data-action="open-letter" aria-label="Mở phong thư để đọc lá thư" ${state.letterOpening ? 'disabled' : ''}>
+            <span class="sealed-envelope-shadow" aria-hidden="true"></span>
+            <span class="sealed-envelope-body" aria-hidden="true"></span>
+            <span class="sealed-envelope-flap" aria-hidden="true"></span>
+            <span class="sealed-envelope-letter" aria-hidden="true"><i>Gửi Hồng Châu ♡</i></span>
+            <span class="sealed-envelope-front" aria-hidden="true"></span>
+            <span class="sealed-envelope-seal" aria-hidden="true">♥</span>
+          </button>
+          <button class="open-letter-hint" data-action="open-letter" ${state.letterOpening ? 'disabled' : ''}>
+            <span>${state.letterOpening ? 'Phong thư đang mở…' : 'Chạm vào phong thư để mở'}</span><span aria-hidden="true">♡</span>
+          </button>
+        </div>
+      </section>
+    `;
+  }
+
   return `
-    <section class="module-screen letter-screen">
+    <section class="module-screen letter-screen letter-screen-opened">
       ${renderTopbar('Words from my heart', 'Một lá thư', '03', 'letter-topbar')}
-      <div class="letter-wrap">
+      <div class="letter-wrap letter-wrap-opened">
+        <div class="envelope-flap-open" aria-hidden="true"></div>
         <div class="envelope-back" aria-hidden="true"><span>♥</span></div>
         <article class="letter-paper">
           <div class="letter-date">22 · 08 · 2026</div>
@@ -290,17 +323,20 @@ function renderLetter() {
 }
 
 function renderHeart() {
+  const heartTransitioning = Boolean(state.heartTransition);
   return `
-    <section class="dark-heart-screen ${state.heartOpened ? 'opened' : ''}">
+    <section class="dark-heart-screen ${state.heartOpened ? 'opened' : ''} ${heartTransitioning ? 'transitioning' : ''}">
       <button class="dark-back-button" data-action="back"><span>←</span> Quay lại</button>
       <p class="dark-heart-kicker">THE SECRET GIFT · 04</p>
       <div class="particle-heart-wrap">
         <canvas class="particle-heart-canvas" aria-hidden="true"></canvas>
-        <button class="particle-heart-hit" data-action="open-heart" aria-label="Chạm để mở trái tim hạt phát sáng" ${state.heartOpened ? 'disabled' : ''}></button>
+        <button class="particle-heart-hit" data-action="toggle-heart" aria-label="${state.heartOpened ? 'Chạm để biến dòng chữ trở lại thành trái tim' : 'Chạm để biến trái tim thành dòng chữ'}" ${heartTransitioning ? 'disabled' : ''}></button>
       </div>
-      ${state.heartOpened ? '' : '<div class="heart-tap-copy"><strong>Chạm vào trái tim</strong><span>để mở món quà cuối cùng</span></div>'}
+      <div class="heart-tap-copy ${state.heartOpened ? 'showing-text' : ''}">
+        <strong>${state.heartOpened ? 'Chạm vào dòng chữ' : 'Chạm vào trái tim'}</strong>
+        <span>${state.heartOpened ? 'để gom lại thành trái tim' : 'để mở món quà cuối cùng'}</span>
+      </div>
       <p class="heart-live-copy" aria-live="polite">${state.heartOpened ? 'Mãi thương em Hồng Châu' : ''}</p>
-      ${state.heartOpened ? '<button class="heart-reset-button" data-action="reset-heart"><span>↻</span> Xem lại trái tim</button>' : ''}
       <button class="dark-music-button" data-action="toggle-music" aria-label="${state.isPlaying ? 'Tắt nhạc' : 'Bật nhạc'}">${state.isPlaying ? '♫' : '♪'}</button>
       <div class="heart-stars" aria-hidden="true">✦　·　✧　·　✦</div>
     </section>
@@ -327,16 +363,24 @@ function render() {
 
   if (state.phase === 'heart') {
     requestAnimationFrame(() => {
-      destroyHeart = initParticleHeart(document.querySelector('.particle-heart-canvas'), state.heartOpened);
+      const particleMode = state.heartTransition || (state.heartOpened ? 'text' : 'heart');
+      destroyHeart = initParticleHeart(document.querySelector('.particle-heart-canvas'), particleMode);
     });
   }
 }
 
 function openModule(phase) {
+  clearTimeout(letterOpeningTimer);
+  clearTimeout(heartTransitionTimer);
   state.message = '';
   state.photoOpen = false;
   state.phase = phase;
-  if (phase === 'heart') state.heartOpened = false;
+  state.letterOpening = false;
+  if (phase === 'letter') state.letterOpened = false;
+  if (phase === 'heart') {
+    state.heartOpened = false;
+    state.heartTransition = null;
+  }
   render();
 }
 
@@ -356,11 +400,6 @@ function unlock() {
     return;
   }
 
-  const song = currentSong();
-  if (song && song.songUrl) {
-    audio.src = song.songUrl;
-    audio.play().catch(() => {});
-  }
   state.message = '';
   state.phase = 'opening';
   render();
@@ -374,6 +413,7 @@ function unlock() {
 function playSong(index) {
   const song = state.gift.songs[index];
   state.activeSong = index;
+  state.hasSelectedSong = true;
   state.message = '';
   state.currentTime = 0;
   state.duration = 0;
@@ -395,6 +435,10 @@ function playSong(index) {
 }
 
 function toggleMusic() {
+  if (!state.hasSelectedSong) {
+    state.hasSelectedSong = true;
+    state.message = '';
+  }
   const song = currentSong();
   if (!song || !song.songUrl) {
     state.message = 'Thêm danh sách nhạc vào Supabase để bật trình phát.';
@@ -464,12 +508,29 @@ app.addEventListener('click', (event) => {
     render();
   } else if (action === 'previous-photo') changePhoto(-1);
   else if (action === 'next-photo') changePhoto(1);
-  else if (action === 'open-heart') {
-    state.heartOpened = true;
+  else if (action === 'open-letter') {
+    if (state.letterOpening || state.letterOpened) return;
+    state.letterOpening = true;
     render();
-  } else if (action === 'reset-heart') {
-    state.heartOpened = false;
+    clearTimeout(letterOpeningTimer);
+    letterOpeningTimer = setTimeout(() => {
+      state.letterOpening = false;
+      state.letterOpened = true;
+      render();
+    }, 1250);
+  }
+  else if (action === 'toggle-heart') {
+    if (state.heartTransition) return;
+    state.heartOpened = !state.heartOpened;
+    state.heartTransition = state.heartOpened ? 'to-text' : 'to-heart';
     render();
+    clearTimeout(heartTransitionTimer);
+    heartTransitionTimer = setTimeout(() => {
+      state.heartTransition = null;
+      document.querySelector('.dark-heart-screen')?.classList.remove('transitioning');
+      const heartHit = document.querySelector('.particle-heart-hit');
+      if (heartHit) heartHit.disabled = false;
+    }, 2050);
   }
 });
 
@@ -482,16 +543,24 @@ app.addEventListener('input', (event) => {
   }
 });
 
-app.addEventListener('touchstart', (event) => {
-  if (event.target.closest('.photo-lightbox')) touchStart = event.touches[0].clientX;
-}, { passive: true });
+app.addEventListener('pointerdown', (event) => {
+  if (!event.target.closest('.photo-lightbox') || event.target.closest('[data-action="close-photo"]')) return;
+  photoSwipeStart = { x: event.clientX, y: event.clientY };
+});
 
-app.addEventListener('touchend', (event) => {
-  if (touchStart === null || !event.target.closest('.photo-lightbox')) return;
-  const distance = event.changedTouches[0].clientX - touchStart;
-  if (Math.abs(distance) > 48) changePhoto(distance > 0 ? -1 : 1);
-  touchStart = null;
-}, { passive: true });
+app.addEventListener('pointerup', (event) => {
+  if (!photoSwipeStart || !event.target.closest('.photo-lightbox')) return;
+  const distanceX = event.clientX - photoSwipeStart.x;
+  const distanceY = event.clientY - photoSwipeStart.y;
+  photoSwipeStart = null;
+  if (Math.abs(distanceX) > 48 && Math.abs(distanceX) > Math.abs(distanceY)) {
+    changePhoto(distanceX > 0 ? -1 : 1);
+  }
+});
+
+app.addEventListener('pointercancel', () => {
+  photoSwipeStart = null;
+});
 
 window.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') {
@@ -534,7 +603,7 @@ audio.addEventListener('ended', () => {
   }
 });
 
-function initParticleHeart(canvas, burst) {
+function initParticleHeart(canvas, mode = 'heart') {
   if (!canvas) return () => {};
   const context = canvas.getContext('2d');
   if (!context) return () => {};
@@ -543,7 +612,7 @@ function initParticleHeart(canvas, burst) {
   let width = 0;
   let height = 0;
   let seed = 220819;
-  const burstStartedAt = performance.now();
+  const transitionStartedAt = performance.now();
   const particleCount = 3200;
   const random = () => {
     seed = (seed * 1664525 + 1013904223) >>> 0;
@@ -570,6 +639,7 @@ function initParticleHeart(canvas, burst) {
       isAura,
       targetX: 0,
       targetY: 0,
+      targetZ: 0,
       index,
     };
   });
@@ -581,10 +651,11 @@ function initParticleHeart(canvas, burst) {
     const textContext = textCanvas.getContext('2d', { willReadFrequently: true });
     if (!textContext) return;
     const compact = width < 620;
-    const lines = compact ? ['Mãi thương em', 'Hồng Châu'] : ['Mãi thương em Hồng Châu'];
+    const lines = (compact ? ['Mãi thương em', 'Hồng Châu'] : ['Mãi thương em Hồng Châu'])
+      .map((line) => line.normalize('NFD'));
     let fontSize = compact ? Math.min(58, width * 0.135) : Math.min(82, width * 0.082);
     const setFont = () => {
-      textContext.font = `italic 700 ${fontSize}px Georgia, serif`;
+      textContext.font = `italic 700 ${fontSize}px "Segoe UI", Arial, sans-serif`;
     };
     setFont();
     const widestLine = () => Math.max(...lines.map((line) => textContext.measureText(line).width));
@@ -612,6 +683,7 @@ function initParticleHeart(canvas, burst) {
       const jitter = index >= targets.length ? ((index % 3) - 1) * 0.42 : 0;
       particle.targetX = target.x + jitter;
       particle.targetY = target.y - jitter;
+      particle.targetZ = Math.sin((target.x / Math.max(width, 1)) * Math.PI * 3.2) * 10 + ((index % 11) - 5) * 0.32;
     });
   };
 
@@ -628,9 +700,12 @@ function initParticleHeart(canvas, burst) {
 
   const draw = (now) => {
     const time = now / 1000;
-    const burstAge = (now - burstStartedAt) / 1000;
-    const burstPower = burst && burstAge < 0.92 ? Math.sin(Math.min(1, burstAge / 0.92) * Math.PI) : 0;
-    const morphRaw = burst ? Math.max(0, Math.min(1, (burstAge - 0.38) / 1.42)) : 0;
+    const transitionAge = (now - transitionStartedAt) / 1000;
+    const transitionProgress = Math.max(0, Math.min(1, (transitionAge - 0.12) / 1.65));
+    const transitionWave = (mode === 'to-text' || mode === 'to-heart') && transitionAge < 1.15
+      ? Math.sin(Math.min(1, transitionAge / 1.15) * Math.PI)
+      : 0;
+    const morphRaw = mode === 'text' ? 1 : mode === 'to-text' ? transitionProgress : mode === 'to-heart' ? 1 - transitionProgress : 0;
     const morph = morphRaw * morphRaw * (3 - 2 * morphRaw);
     const scale = Math.min(width / 38, height / 33.5) * (1 + Math.sin(time * 2.25) * 0.022);
     const rotationY = Math.sin(time * 0.47) * 0.46 * (1 - morph);
@@ -639,6 +714,14 @@ function initParticleHeart(canvas, burst) {
     const sinY = Math.sin(rotationY);
     const cosX = Math.cos(rotationX);
     const sinX = Math.sin(rotationX);
+    const textRotationY = Math.sin(time * 0.42) * 0.13;
+    const textRotationX = Math.sin(time * 0.31 + 0.7) * 0.055;
+    const textCosY = Math.cos(textRotationY);
+    const textSinY = Math.sin(textRotationY);
+    const textCosX = Math.cos(textRotationX);
+    const textSinX = Math.sin(textRotationX);
+    const textFloatX = Math.sin(time * 0.52) * Math.min(7, width * 0.008);
+    const textFloatY = Math.cos(time * 0.43) * Math.min(6, height * 0.009);
 
     context.clearRect(0, 0, width, height);
     const glowRadius = morph ? Math.min(width * 0.48, height * 0.34) : Math.min(width, height) * 0.43;
@@ -657,15 +740,26 @@ function initParticleHeart(canvas, burst) {
       const y1 = particle.y * cosX - z1 * sinX;
       const z2 = particle.y * sinX + z1 * cosX;
       const distance = Math.sqrt(particle.x * particle.x + particle.y * particle.y) || 1;
-      const explode = burstPower * (5.5 + (particle.index % 13) * 0.52);
+      const explode = transitionWave * (5.2 + (particle.index % 13) * 0.48);
       const perspective = 1.18 / (1.18 + (z2 + 9) / 48);
       const heartX = width / 2 + (x1 + (particle.x / distance) * explode + wobble) * scale * perspective;
       const heartY = height / 2 + (y1 + (particle.y / distance) * explode + wobble * 0.45) * scale * perspective;
-      const shimmer = Math.sin(time * 1.4 + particle.drift) * 0.28 * morph;
-      const screenX = heartX + (particle.targetX + shimmer - heartX) * morph;
-      const screenY = heartY + (particle.targetY - shimmer * 0.35 - heartY) * morph;
+      const targetLocalX = particle.targetX - width / 2;
+      const targetLocalY = particle.targetY - height / 2;
+      const targetWobble = Math.sin(time * particle.speed * 0.48 + particle.drift) * 0.85;
+      const targetX1 = targetLocalX * textCosY - particle.targetZ * textSinY;
+      const targetZ1 = targetLocalX * textSinY + particle.targetZ * textCosY;
+      const targetY1 = targetLocalY * textCosX - targetZ1 * textSinX;
+      const targetZ2 = targetLocalY * textSinX + targetZ1 * textCosX;
+      const textPerspective = 1.04 / (1.04 + targetZ2 / 520);
+      const textX = width / 2 + targetX1 * textPerspective + textFloatX + targetWobble;
+      const textY = height / 2 + targetY1 * textPerspective + textFloatY + Math.cos(time * particle.speed * 0.4 + particle.drift) * 0.52;
+      const scatterAngle = particle.drift + particle.index * 0.017;
+      const scatter = transitionWave * (4 + (particle.index % 17) * 0.46);
+      const screenX = heartX + (textX - heartX) * morph + Math.cos(scatterAngle) * scatter;
+      const screenY = heartY + (textY - heartY) * morph + Math.sin(scatterAngle) * scatter;
       const twinkle = 0.54 + Math.sin(time * 3.4 + particle.twinkle) * 0.26;
-      const pointSize = Math.max(0.72, particle.size * perspective * (1 + burstPower * 0.35 + morph * 0.08));
+      const pointSize = Math.max(0.72, particle.size * (perspective * (1 - morph) + textPerspective * morph) * (1 + transitionWave * 0.35 + morph * 0.08));
       const lightness = 59 + Math.max(-9, Math.min(15, z2 * 1.7)) * (1 - morph) + twinkle * 14 + morph * 7;
       const alpha = particle.isAura ? 0.34 : particle.onShell ? 0.78 : Math.max(0.28, twinkle);
       context.fillStyle = `hsla(${particle.hue}, 98%, ${lightness}%, ${alpha + morph * (0.95 - alpha)})`;
