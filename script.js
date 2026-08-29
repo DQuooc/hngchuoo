@@ -239,7 +239,7 @@ function renderMusic() {
           <p class="play-mode-copy">${state.repeatOne ? 'Bài hiện tại sẽ được phát liên tục.' : 'Hết bài sẽ tự chuyển bài kế tiếp và quay lại từ đầu.'}</p>
         </div>
         <div class="playlist-card">
-          <div class="playlist-heading"><span>Playlist dành riêng cho bạn</span><small>♡</small></div>
+          <div class="playlist-heading"><span>Playlist</span><small>♡</small></div>
           <div class="song-list">${rows}</div>
           <p class="playlist-message" role="status">${escapeHtml(state.message)}</p>
         </div>
@@ -312,7 +312,7 @@ function renderLetter() {
         <div class="envelope-flap-open" aria-hidden="true"></div>
         <div class="envelope-back" aria-hidden="true"><span>♥</span></div>
         <article class="letter-paper">
-          <div class="letter-date">22 · 08 · 2026</div>
+          <div class="letter-date">29 · 08 · 2026</div>
           <p class="letter-greeting">${escapeHtml(state.gift.letterGreeting)}</p>
           ${paragraphs}
           <div class="letter-signoff"><span>Thương em,</span><strong>${escapeHtml(state.gift.letterSignoff)} ♡</strong></div>

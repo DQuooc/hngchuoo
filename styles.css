@@ -216,7 +216,7 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
 .spinning { animation: vinylSpin 8s linear infinite; }
 .now-playing-copy { margin: 22px 0 18px; }
 .now-playing-copy p { margin: 0 0 7px; color: #b6596e; font-size: 9px; font-weight: 800; letter-spacing: .17em; text-transform: uppercase; }
-.now-playing-copy h3 { margin: 0; font-family: var(--display); font-size: 29px; font-weight: 600; letter-spacing: -.025em; }
+.now-playing-copy h3 { margin: 0; font-family: 'Segoe UI', Arial, sans-serif; font-size: 29px; font-weight: 600; letter-spacing: 0; }
 .now-playing-copy span { display: block; margin-top: 5px; color: #8c7077; font-size: 11px; }
 .song-progress { width: 100%; height: 4px; accent-color: #c7526a; cursor: pointer; }
 .song-time { display: flex; justify-content: space-between; margin-top: 7px; color: #9a7c83; font-size: 9px; }
@@ -240,7 +240,7 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
 .song-row.active .song-index { color: #c44f67; font-size: 15px; }
 .song-row img { width: 49px; height: 49px; border-radius: 13px; object-fit: cover; }
 .song-copy { min-width: 0; display: grid; gap: 5px; }
-.song-copy strong { overflow: hidden; font-family: var(--display); font-size: 18px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.song-copy strong { overflow: hidden; font-family: 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 600; letter-spacing: 0; text-overflow: ellipsis; white-space: nowrap; }
 .song-copy small { overflow: hidden; color: #957982; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .song-action { color: #b3566a; font-size: 12px; }
 .playlist-message { min-height: 16px; margin: 0; padding: 7px 20px 13px; color: #a8495f; font-size: 9px; text-align: center; }
@@ -564,6 +564,41 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
 }
 
 @media (max-width: 430px) {
+  body { overflow-x: hidden; }
+  .lock-screen { padding-inline: 10px; }
+  .lock-card { padding-inline: 18px; }
+  .lock-card h1 { font-size: clamp(36px, 11vw, 43px); }
+  .intro { font-size: 13px; }
+  .gift-hub { gap: 20px; padding-top: max(40px, env(safe-area-inset-top)); }
+  .hub-heading h2 { font-size: 39px; }
+  .hub-heading > p:last-child { margin-top: 13px; font-size: 15px; line-height: 1.35; }
+  .hub-module { min-height: 100px; grid-template-columns: 52px 1fr 20px; padding: 14px 16px; }
+  .module-icon { width: 50px; height: 50px; border-radius: 16px; font-size: 24px; }
+  .module-copy strong { font-size: 21px; }
+  .module-topbar { min-height: 76px; grid-template-columns: 44px minmax(0, 1fr) 44px; padding: max(10px, env(safe-area-inset-top)) 10px 10px; }
+  .module-topbar h2 { overflow: hidden; font-size: 22px; text-overflow: ellipsis; white-space: nowrap; }
+  .back-button { width: 40px; height: 40px; justify-content: center; padding: 0; font-size: 0; }
+  .back-button span { font-size: 17px; }
+  .module-count { font-size: 8px; letter-spacing: .08em; white-space: nowrap; }
+  .music-layout { gap: 12px; padding: 14px 10px 26px; }
+  .now-playing-card { padding: 18px 16px; border-radius: 24px; }
+  .vinyl-cover { width: 176px; border-width: 9px; }
+  .now-playing-copy { margin: 16px 0 13px; }
+  .now-playing-copy h3 { font-size: 23px; line-height: 1.08; }
+  .player-controls { margin-top: 13px; }
+  .playlist-card { border-radius: 24px; }
+  .playlist-heading { height: 56px; padding-inline: 16px; }
+  .playlist-heading span { font-size: 18px; }
+  .song-row { min-height: 64px; grid-template-columns: 22px 40px minmax(0, 1fr) 14px; gap: 8px; padding: 7px 11px; }
+  .song-row img { width: 40px; height: 40px; border-radius: 11px; }
+  .song-copy strong { font-size: 15px; }
+  .photo-list-grid { grid-auto-rows: 165px; }
+  .sealed-letter-stage { padding-inline: 10px; }
+  .sealed-letter-intro p { font-size: 25px; }
+  .sealed-envelope { width: min(90vw, 360px); }
+  .letter-paper { padding-inline: 21px; }
+  .letter-paper > p { font-size: 17px; line-height: 1.68; }
+  .letter-paper .letter-greeting { font-size: 26px; }
   .gallery-topbar .eyebrow { display: none; }
   .gallery-topbar h2 { max-width: 45vw; font-size: 20px; }
   .gallery-stage { grid-template-columns: 35px minmax(0, 1fr) 35px; }
@@ -571,6 +606,20 @@ button:focus-visible { outline: 3px solid rgba(176, 61, 86, .34); outline-offset
   .photo-frame { height: min(59svh, 500px); }
   .gallery-footer p { display: none; }
   .final-note h2 { font-size: 46px; }
+}
+
+@media (max-width: 360px) {
+  .hub-heading h2 { font-size: 35px; }
+  .hub-module { min-height: 92px; }
+  .module-copy strong { font-size: 19px; }
+  .now-playing-copy h3 { font-size: 21px; }
+  .photo-list-grid { grid-auto-rows: 150px; }
+}
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .lock-screen, .gift-hub { min-height: 100svh; overflow-y: auto; }
+  .particle-heart-wrap { inset-block: 0; }
+  .heart-tap-copy { bottom: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
